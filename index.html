@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bike Log</title>
+<meta name="theme-color" content="#14213d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bike Log">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+:root{--bg:#edf0f3;--card:#fff;--tx:#14213d;--mut:#5f6b7a;--ac:#1f5fbf;--ok:#2b8a3e;--warn:#c77700;--bad:#c92a2a;--bd:#d9dee5;--od:#14213d;--odt:#f1f5f9;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1620;--card:#1a2431;--tx:#e8edf3;--mut:#93a1b3;--ac:#6ea4f5;--ok:#51cf66;--warn:#fcc419;--bad:#ff8787;--bd:#2b3a4d;--od:#050a10;--odt:#e8edf3}}
+:root[data-theme="dark"]{--bg:#0f1620;--card:#1a2431;--tx:#e8edf3;--mut:#93a1b3;--ac:#6ea4f5;--ok:#51cf66;--warn:#fcc419;--bad:#ff8787;--bd:#2b3a4d;--od:#050a10;--odt:#e8edf3}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:480px;margin:0 auto;padding:16px 16px 96px}
+h1,h2,.odo{font-family:"Barlow Condensed","Arial Narrow",system-ui,sans-serif}
+h2{font-size:22px;margin:20px 0 8px;letter-spacing:.2px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:10px}
+.hero{background:var(--od);color:var(--odt);border-radius:14px;padding:18px;margin-bottom:14px}
+.hero .n{font-size:15px;opacity:.75}
+.odo{font-size:52px;font-weight:700;line-height:1.05;letter-spacing:2px}
+.odo small{font-size:20px;letter-spacing:0;opacity:.7;margin-left:6px}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1}
+label{display:block;font-size:14px;color:var(--mut);margin:10px 0 4px}
+input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{width:100%;padding:11px;border-radius:8px;border:1px solid var(--bd);background:var(--card)}
+.hero input{background:transparent;border-color:#ffffff40;color:var(--odt)}
+button{padding:11px 16px;border-radius:8px;border:0;background:var(--ac);color:#fff;font-weight:600;cursor:pointer}
+button.g{background:transparent;color:var(--ac);border:1px solid var(--bd)}
+button.x{background:transparent;color:var(--bad);padding:4px 8px}
+.hero button{flex:0 0 auto}
+.due{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.due b{display:block}
+.tag{font-size:14px;font-weight:600;text-align:right}
+.bad{color:var(--bad)}.warn{color:var(--warn)}.ok{color:var(--ok)}.none{color:var(--mut)}
+.due.bad-l{border-left:4px solid var(--bad)}.due.warn-l{border-left:4px solid var(--warn)}.due.ok-l{border-left:4px solid var(--ok)}.due.none-l{border-left:4px solid var(--bd)}
+.mut{color:var(--mut);font-size:14px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;background:transparent;color:var(--mut);border-radius:0;padding:14px 4px}
+nav button.on{color:var(--ac);box-shadow:inset 0 3px 0 var(--ac)}
+.cal{display:block;font-weight:600;color:var(--ac);font-size:13px;margin-top:4px;text-decoration:none}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(72px + env(safe-area-inset-bottom,0px));background:var(--tx);color:var(--bg);padding:9px 16px;border-radius:20px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.show{opacity:1}
+textarea{min-height:110px;font:13px/1.3 ui-monospace,Menlo,monospace}
+.int{display:grid;grid-template-columns:1fr 78px 78px;gap:6px;align-items:center;margin-bottom:6px}
+.int input{padding:8px}
+</style>
+</head>
+<body>
+<main id="v"></main>
+<div id="toast"></div>
+<nav>
+<button data-t="home">Home</button><button data-t="add">Add service</button><button data-t="hist">History</button><button data-t="set">Settings</button>
+</nav>
+<script>
+const DEF={"Engine oil":{km:2500,days:180},"Chain lube":{km:500,days:0},"Chain and sprocket":{km:15000,days:0},"Brake pads":{km:10000,days:0},"Brake fluid":{km:0,days:365},"Coolant":{km:0,days:730},"Spark plug":{km:8000,days:0},"Air filter":{km:8000,days:0},"Tyres":{km:20000,days:0},"Battery":{km:0,days:730},"Road tax":{km:0,days:365},"Insurance":{km:0,days:365},"Modification":{km:0,days:0}};
+let S,tab="home";
+const $=s=>document.querySelector(s);
+const esc=t=>String(t==null?"":t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const fmt=n=>Number(n||0).toLocaleString("en-MY");
+function load(){try{S=JSON.parse(localStorage.getItem("bikelog"))}catch(e){S=null}
+ if(!S||!S.bike){S={bike:{name:"My RS150R",plate:"",odo:0},items:JSON.parse(JSON.stringify(DEF)),logs:[]}}}
+function save(){try{localStorage.setItem("bikelog",JSON.stringify(S))}catch(e){toast("Could not save on this browser")}}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800)}
+function status(name){const r=S.items[name];if(!r||(!r.km&&!r.days))return null;
+ const l=S.logs.filter(x=>x.item===name).sort((a,b)=>b.date.localeCompare(a.date)||b.odo-a.odo)[0];
+ if(!l)return{name,s:"none",o:2,t:"No record yet"};
+ const kl=r.km?l.odo+r.km-S.bike.odo:null;
+ const dl=r.days?r.days-Math.floor((new Date(today())-new Date(l.date))/864e5):null;
+ const bad=(kl!==null&&kl<0)||(dl!==null&&dl<0);
+ const soon=(kl!==null&&kl<=r.km*.15)||(dl!==null&&dl<=30);
+ const p=[];
+ if(kl!==null)p.push(kl<0?fmt(-kl)+" km over":fmt(kl)+" km left");
+ if(dl!==null)p.push(dl<0?-dl+" days over":dl+" days left");
+ return{name,s:bad?"bad":soon?"warn":"ok",o:bad?0:soon?1:3,t:p.join(", "),last:l,kl}}
+function view(t){tab=t;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+ $("#v").innerHTML={home,add,hist,set}[t]();window.scrollTo(0,0)}
+function home(){
+ const list=Object.keys(S.items).map(status).filter(Boolean).sort((a,b)=>a.o-b.o);
+ return `<div class="hero"><div class="n">${esc(S.bike.name)}${S.bike.plate?", "+esc(S.bike.plate):""}</div>
+ <div class="odo">${fmt(S.bike.odo)}<small>km</small></div>
+ <div class="row" style="margin-top:12px"><input id="odo" type="number" inputmode="numeric" placeholder="New odometer (km)"><button onclick="setOdo()">Update</button></div></div>
+ <h2>What is due</h2>`+(list.length?list.map(d=>`<div class="card due ${d.s}-l"><div><b>${esc(d.name)}</b>${d.last?`<span class="mut">Last: ${esc(d.last.date)} at ${fmt(d.last.odo)} km</span>`:""}</div><div class="tag ${d.s}">${esc(d.t)}${calLink(d)}</div></div>`).join(""):`<div class="card mut">No reminders set. Turn on intervals in Settings.</div>`)+
+ `<button style="width:100%;margin-top:6px" onclick="view('add')">Add service</button>`}
+function addDays(iso,n){const d=new Date(iso+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}
+function calLink(d){if(!d.last)return"";const r=S.items[d.name],w=S.kmWeek||100,c=[];
+ if(r.days)c.push(addDays(d.last.date,r.days));
+ if(r.km)c.push(addDays(today(),Math.max(0,Math.round(d.kl/w*7))));
+ let due=c.sort()[0];if(due<today())due=today();
+ const a=due.replace(/-/g,""),b=addDays(due,1).replace(/-/g,"");
+ const det=r.km?`Due around ${fmt(d.last.odo+r.km)} km. Check your odometer.`:"Renewal or service due.";
+ const u="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent("Bike: "+d.name+" due")+"&dates="+a+"/"+b+"&details="+encodeURIComponent(det);
+ return `<a class="cal" href="${u}" target="_blank" rel="noopener">Add to calendar (${due})</a>`}
+function setOdo(){const v=parseInt($("#odo").value,10);if(isNaN(v)||v<0)return toast("Enter a valid odometer reading");S.bike.odo=v;save();view("home");toast("Odometer updated")}
+function add(){return `<h2>Add service</h2><div class="card">
+ <label>Item</label><select id="fi">${Object.keys(S.items).map(k=>`<option>${esc(k)}</option>`).join("")}</select>
+ <label>Date (renewal date for road tax and insurance)</label><input id="fd" type="date" value="${today()}">
+ <label>Odometer (km)</label><input id="fo" type="number" inputmode="numeric" value="${S.bike.odo}">
+ <label>Cost (RM)</label><input id="fc" type="number" inputmode="decimal" step="0.01" placeholder="0.00">
+ <label>Notes (brand, part name, shop)</label><textarea id="fn" style="min-height:70px;font:inherit"></textarea>
+ <button style="width:100%;margin-top:14px" onclick="addLog()">Save service</button></div>`}
+function addLog(){const odo=parseInt($("#fo").value,10),date=$("#fd").value;
+ if(!date||isNaN(odo))return toast("Fill in date and odometer");
+ S.logs.push({id:Date.now(),item:$("#fi").value,date,odo,cost:parseFloat($("#fc").value)||0,notes:$("#fn").value.trim()});
+ if(odo>S.bike.odo)S.bike.odo=odo;save();view("home");toast("Service saved")}
+function hist(){
+ const L=[...S.logs].sort((a,b)=>b.date.localeCompare(a.date)||b.odo-a.odo);
+ const tot=L.reduce((s,x)=>s+x.cost,0),yr=L.filter(x=>x.date.slice(0,4)===today().slice(0,4)).reduce((s,x)=>s+x.cost,0);
+ return `<h2>History</h2><div class="card row"><div><span class="mut">This year</span><br><b>RM ${fmt(yr.toFixed(2))}</b></div><div><span class="mut">All time</span><br><b>RM ${fmt(tot.toFixed(2))}</b></div></div>`+
+ (L.length?L.map(x=>`<div class="card"><div class="due"><b>${esc(x.item)}</b><span class="mut">${esc(x.date)}</span></div><div class="mut">${fmt(x.odo)} km${x.cost?", RM "+x.cost.toFixed(2):""}</div>${x.notes?`<div>${esc(x.notes)}</div>`:""}<button class="x" onclick="del(${x.id})">Delete</button></div>`).join(""):`<div class="card mut">Nothing logged yet. Add your first service.</div>`)}
+function del(id){if(!confirm("Delete this entry?"))return;S.logs=S.logs.filter(x=>x.id!==id);save();view("hist")}
+function set(){const ks=Object.keys(S.items);
+ return `<h2>Bike</h2><div class="card"><label>Name</label><input value="${esc(S.bike.name)}" onchange="S.bike.name=this.value;save()"><label>Plate number</label><input value="${esc(S.bike.plate)}" onchange="S.bike.plate=this.value;save()"></div>
+ <h2>Service intervals</h2><div class="card"><div class="int mut"><span>Item</span><span>Every km</span><span>Every days</span></div>
+ ${ks.map((k,i)=>`<div class="int"><span>${esc(k)}</span><input type="number" inputmode="numeric" value="${S.items[k].km}" onchange="setInt(${i},'km',this.value)"><input type="number" inputmode="numeric" value="${S.items[k].days}" onchange="setInt(${i},'days',this.value)"></div>`).join("")}
+ <label>Average riding per week (km). Used to estimate calendar dates for km-based reminders.</label><input type="number" inputmode="numeric" value="${S.kmWeek||100}" onchange="S.kmWeek=Math.max(1,parseInt(this.value,10)||100);save()"><div class="mut" style="margin-top:8px">Use 0 to switch a reminder off. These are starting values. Check your manual or mechanic.</div></div>
+ <h2>Backup</h2><div class="card"><div class="mut">Copy this text and keep it somewhere safe. Paste it back here to restore.</div>
+ <textarea id="bk">${esc(JSON.stringify(S))}</textarea>
+ <div class="row" style="margin-top:8px"><button class="g" onclick="copyBk()">Copy</button><button onclick="impBk()">Restore</button></div></div>`}
+function setInt(i,f,v){const k=Object.keys(S.items)[i];S.items[k][f]=Math.max(0,parseInt(v,10)||0);save()}
+function copyBk(){const t=$("#bk");t.select();try{navigator.clipboard.writeText(t.value).then(()=>toast("Copied"),()=>{document.execCommand("copy");toast("Copied")})}catch(e){document.execCommand("copy");toast("Copied")}}
+function impBk(){try{const d=JSON.parse($("#bk").value);if(!d.bike||!d.items||!Array.isArray(d.logs))throw 0;if(!confirm("Replace current data with this backup?"))return;S=d;save();view("set");toast("Restored")}catch(e){toast("That backup text is not valid")}}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>view(b.dataset.t));
+load();view("home");
+if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
